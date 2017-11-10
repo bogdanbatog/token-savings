@@ -13,46 +13,46 @@ class TestFeeRedistribution(unittest.TestCase):
 
     def test_one_user(self):
         tb = TestKlass()
-        tb.deposit("A", ether=100)
-        ret = tb.withdraw("A")
+        tb.deposit("A1", ether=100)
+        ret = tb.withdraw("A1")
         self.assertEqual(ret, 100 * ETHER2WEI)
 
     def test_two_users(self):
         tb = TestKlass()
-        tb.deposit("A", ether=100)
-        tb.deposit("B", ether=100)
-        ret_a = tb.withdraw("A")
-        ret_b = tb.withdraw("B")
+        tb.deposit("A2", ether=100)
+        tb.deposit("B2", ether=100)
+        ret_a = tb.withdraw("A2")
+        ret_b = tb.withdraw("B2")
         self.assertEqual(ret_a + ret_b, (100 + 100) * ETHER2WEI)
         self.assertEqual(ret_a, 100 * PRINCIPAL_RATIO_PPT * ETHER2WEI / PPT)
 
     def test_two_diff_users(self):
         tb = TestKlass()
-        tb.deposit("A", ether=100)
-        tb.deposit("B", ether=100000)
-        ret_a = tb.withdraw("A")
-        ret_b = tb.withdraw("B")
+        tb.deposit("A3", ether=100)
+        tb.deposit("B3", ether=100000)
+        ret_a = tb.withdraw("A3")
+        ret_b = tb.withdraw("B3")
         self.assertEqual(ret_a + ret_b, (100 + 100000) * ETHER2WEI)
         self.assertEqual(ret_a, 100 * PRINCIPAL_RATIO_PPT * ETHER2WEI / PPT)
 
     def test_two_users_magnitude(self):
         tb = TestKlass()
-        tb.deposit("A", wei=3 * PPT)
-        tb.deposit("B", ether=1000000)
-        ret_b = tb.withdraw("B")
-        ret_a = tb.withdraw("A")
+        tb.deposit("A4", wei=3 * PPT)
+        tb.deposit("B4", ether=1000000)
+        ret_b = tb.withdraw("B4")
+        ret_a = tb.withdraw("A4")
         self.assertEqual(ret_b,
             1000000 * PRINCIPAL_RATIO_PPT * ETHER2WEI / PPT)
         self.assertEqual(ret_a + ret_b, 1000000 * ETHER2WEI + 3 * PPT)
 
     def test_three_users_magnitude(self):
         tb = TestKlass()
-        tb.deposit("A", wei=3 * PPT)
-        tb.deposit("B", ether=1000000)
-        tb.deposit("C", ether=1)
-        ret_b = tb.withdraw("B")
-        ret_c = tb.withdraw("C")
-        ret_a = tb.withdraw("A")
+        tb.deposit("A5", wei=3 * PPT)
+        tb.deposit("B5", ether=1000000)
+        tb.deposit("C5", ether=1)
+        ret_b = tb.withdraw("B5")
+        ret_c = tb.withdraw("C5")
+        ret_a = tb.withdraw("A5")
 
         self.assertEqual(ret_b,
             1000000 * PRINCIPAL_RATIO_PPT * ETHER2WEI / PPT)
@@ -66,12 +66,12 @@ class TestFeeRedistribution(unittest.TestCase):
 
     def test_three_users_magnitude_bis(self):
         tb = TestKlass()
-        tb.deposit("A", wei=3 * PPT)
-        tb.deposit("B", ether=1000000)
-        tb.deposit("C", ether=40)
-        ret_c = tb.withdraw("C")
-        ret_b = tb.withdraw("B")
-        ret_a = tb.withdraw("A")
+        tb.deposit("A6", wei=3 * PPT)
+        tb.deposit("B6", ether=1000000)
+        tb.deposit("C6", ether=40)
+        ret_c = tb.withdraw("C6")
+        ret_b = tb.withdraw("B6")
+        ret_a = tb.withdraw("A6")
 
         self.assertEqual(ret_a + ret_b + ret_c, 1000040 * ETHER2WEI + 3 * PPT)
         self.assertEqual(ret_c, 39 * ETHER2WEI)
@@ -84,16 +84,16 @@ class TestFeeRedistribution(unittest.TestCase):
 
     def test_five_users(self):
         tb = TestKlass()
-        tb.deposit("A", ether=70000)
-        tb.deposit("B", ether=7000)
-        tb.deposit("C", ether=700)
-        tb.deposit("D", ether=70)
-        tb.deposit("E", ether=7)
-        ret_a = tb.withdraw("A")
-        ret_b = tb.withdraw("B")
-        ret_c = tb.withdraw("C")
-        ret_d = tb.withdraw("D")
-        ret_e = tb.withdraw("E")
+        tb.deposit("A7", ether=70000)
+        tb.deposit("B7", ether=7000)
+        tb.deposit("C7", ether=700)
+        tb.deposit("D7", ether=70)
+        tb.deposit("E7", ether=7)
+        ret_a = tb.withdraw("A7")
+        ret_b = tb.withdraw("B7")
+        ret_c = tb.withdraw("C7")
+        ret_d = tb.withdraw("D7")
+        ret_e = tb.withdraw("E7")
 
         self.assertEqual(
             ret_a + ret_b + ret_c + ret_d + ret_e,
@@ -118,15 +118,20 @@ class TestFeeRedistribution(unittest.TestCase):
         N = 10000
         S = 7
         for i in range(N):
-            user = "u" + str(i)
-            tb.deposit(user, ether=S)
+            address = "X" + str(i)
+            tb.deposit(address, ether=S)
 
         total_withdraw = 0
         for i in range(N):
-            user = "u" + str(i)
-            r = tb.withdraw(user)
+            address = "X" + str(i)
+            r = tb.withdraw(address)
             total_withdraw += r
         self.assertEqual(total_withdraw, N * S * ETHER2WEI)
+
+    def test_sequence(self):
+        self.test_five_users()
+        self.test_thousand_users()
+        self.test_three_users_magnitude()
 
 
 if __name__ == '__main__':
