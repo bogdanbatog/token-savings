@@ -37,43 +37,50 @@ class TestFeeRedistribution(unittest.TestCase):
 
     def test_two_users_magnitude(self):
         tb = TestKlass()
-        tb.deposit("A", wei=3000)
+        tb.deposit("A", wei=3 * PPT)
         tb.deposit("B", ether=1000000)
         ret_b = tb.withdraw("B")
         ret_a = tb.withdraw("A")
         self.assertEqual(ret_b,
             1000000 * PRINCIPAL_RATIO_PPT * ETHER2WEI / PPT)
-        self.assertEqual(ret_a + ret_b, 1000000 * ETHER2WEI + 3000)
+        self.assertEqual(ret_a + ret_b, 1000000 * ETHER2WEI + 3 * PPT)
 
     def test_three_users_magnitude(self):
         tb = TestKlass()
-        tb.deposit("A", wei=3000)
+        tb.deposit("A", wei=3 * PPT)
         tb.deposit("B", ether=1000000)
         tb.deposit("C", ether=1)
         ret_b = tb.withdraw("B")
         ret_c = tb.withdraw("C")
         ret_a = tb.withdraw("A")
+
         self.assertEqual(ret_b,
             1000000 * PRINCIPAL_RATIO_PPT * ETHER2WEI / PPT)
+
+        fee_b = 1000000 * FEE_RATIO_PPT * ETHER2WEI / PPT
         self.assertEqual(ret_c,
-            1000000 * FEE_RATIO_PPT * ETHER2WEI / PPT +
+            (fee_b) / (1 * ETHER2WEI / PPT + 3) * 1 * ETHER2WEI / PPT +
             1 * PRINCIPAL_RATIO_PPT * ETHER2WEI / PPT
         )
-        self.assertEqual(ret_a + ret_b + ret_c, 1000001 * ETHER2WEI + 3000)
+        self.assertEqual(ret_a + ret_b + ret_c, 1000001 * ETHER2WEI + 3 * PPT)
 
     def test_three_users_magnitude_bis(self):
         tb = TestKlass()
-        tb.deposit("A", wei=3000)
+        tb.deposit("A", wei=3 * PPT)
         tb.deposit("B", ether=1000000)
         tb.deposit("C", ether=40)
         ret_c = tb.withdraw("C")
         ret_b = tb.withdraw("B")
         ret_a = tb.withdraw("A")
 
-        self.assertEqual(ret_a + ret_b + ret_c, 1000040 * ETHER2WEI + 3000)
+        self.assertEqual(ret_a + ret_b + ret_c, 1000040 * ETHER2WEI + 3 * PPT)
         self.assertEqual(ret_c, 39 * ETHER2WEI)
+        fee_c = 1 * ETHER2WEI
+
         self.assertEqual(ret_b,
-            1000000 * PRINCIPAL_RATIO_PPT * ETHER2WEI / PPT + 1 * ETHER2WEI)
+            (fee_c) / (1000000 * ETHER2WEI / PPT + 3) * 1000000 * ETHER2WEI / PPT +
+            1000000 * PRINCIPAL_RATIO_PPT * ETHER2WEI / PPT
+        )
 
     def test_five_users(self):
         tb = TestKlass()

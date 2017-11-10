@@ -49,7 +49,9 @@ and we compute it on integers and keep track of reminder.
 Choice of PPT/PPM/PPB
 
 Larger PPT values cause smaller deposits to NOT receive reward. This means
-we can not accept deposits smaller than PPT wei.
+we can not accept deposits smaller than PPT wei. ACTUALLY, should also
+TRUNC deposits to be multiple of PPT (otherwise the math will broke when a lot
+of sub PPT fractions accumulate in principal_total).
 
 Smaller PPT values cause delaying of rewards because the distribution base
 may be too large and reward per base rounds to zero.
@@ -78,6 +80,10 @@ class FeeRedistributionAtWithdrawlConstantTime:
         amount = int(ether) * ETHER2WEI + int(wei)
         if amount <= 0:
             return None
+
+        if amount < PPT:
+            raise Exception(
+                "Deposits smaller than {} wei not accepted".format(PPT))
 
         if address in self.principal:
             raise Exception("Not Implemented: multiple deposits per address.")
