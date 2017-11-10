@@ -46,7 +46,7 @@ Precision
 We work with ppt/ppm integer math only. We only have one division
 and we compute it on integers and keep track of reminder.
 
-Choice of PPT
+Choice of PPT/PPM/PPB
 
 Larger PPT values cause smaller deposits to NOT receive reward. This means
 we can not accept deposits smaller than PPT wei.
@@ -102,15 +102,11 @@ class FeeRedistributionAtWithdrawlConstantTime:
         # clear user account
         self.principal[address] = 0
         self.reward_ppt_initial[address] = 0
-        is_last_user = principal == self.principal_total
+        is_last_withdrawal = principal == self.principal_total
         self.principal_total -= principal
 
-        if is_last_user:
-            # special case for last user to withdraw: no fee
-            reward += fee + self.reward_reminder
-            self.reward_reminder = 0
-        else:
-            # use reminder and current fee to update total reward and reminder
+        # update total reward and reminder
+        if not is_last_withdrawal:
             amount = fee + self.reward_reminder  # wei
             base = self.principal_total / PPT # T wei
 
@@ -120,5 +116,10 @@ class FeeRedistributionAtWithdrawlConstantTime:
                 ratio = amount / base  # 1 / T
                 self.reward_ppt_total += ratio
                 self.reward_reminder = amount % base  # wei
+        else:
+            # special case for last withdrawal: no fee
+            fee = 0
+            reward += self.reward_reminder
+            self.reward_reminder = 0
 
         return principal - fee + reward
