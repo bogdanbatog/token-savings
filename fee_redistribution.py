@@ -44,7 +44,7 @@ x_n = x_n * [S_withdrawal - S_deposit]
 Precision
 
 We work with ppt/ppm integer math only. We only have one division
-and we compute it on integers and keep track of reminder.
+and we compute it on integers and keep track of remainder.
 
 Choice of PPT/PPM/PPB
 
@@ -57,12 +57,12 @@ Smaller PPT values cause delaying of rewards because the distribution base
 may be too large and reward per base rounds to zero.
 '''
 
-PPT = 1000000000
+PPT = 10**9
 
 FEE_RATIO_PPT = 25 * PPT / 1000  # 2.5%
 PRINCIPAL_RATIO_PPT = (PPT - FEE_RATIO_PPT)
 
-ETHER2WEI = 1000000000000000000
+ETHER2WEI = 10**18
 
 
 class FeeRedistributionAtWithdrawlConstantTime:
@@ -74,7 +74,7 @@ class FeeRedistributionAtWithdrawlConstantTime:
 
         self.reward_ppt_initial = {}
         self.reward_ppt_total = 0
-        self.reward_reminder = 0
+        self.reward_remainder = 0
 
     def deposit(self, address, ether=0, wei=0):
         amount = int(ether) * ETHER2WEI + int(wei)
@@ -111,21 +111,21 @@ class FeeRedistributionAtWithdrawlConstantTime:
         is_last_withdrawal = principal == self.principal_total
         self.principal_total -= principal
 
-        # update total reward and reminder
+        # update total reward and remainder
         if not is_last_withdrawal:
-            amount = fee + self.reward_reminder  # wei
+            amount = fee + self.reward_remainder  # wei
             base = self.principal_total / PPT # T wei
 
             if base == 0:
-                self.reward_reminder = amount
+                self.reward_remainder = amount
             else:
                 ratio = amount / base  # 1 / T
                 self.reward_ppt_total += ratio
-                self.reward_reminder = amount % base  # wei
+                self.reward_remainder = amount % base  # wei
         else:
             # special case for last withdrawal: no fee
             fee = 0
-            reward += self.reward_reminder
-            self.reward_reminder = 0
+            reward += self.reward_remainder
+            self.reward_remainder = 0
 
         return principal - fee + reward
