@@ -1,4 +1,5 @@
 import unittest
+import random
 
 
 from fee_redistribution import (
@@ -127,6 +128,28 @@ class TestFeeRedistribution(unittest.TestCase):
             r = tb.withdraw(address)
             total_withdraw += r
         self.assertEqual(total_withdraw, N * S * ETHER2WEI)
+
+
+    def test_random(self):
+        tb = TestKlass()
+        N = 10000
+        total_deposit = 0
+        for i in range(N):
+            address = "X" + str(i)
+            amount_eth = random.randint(1, 100000)
+            amount_wei = random.randint(1, ETHER2WEI - 1)
+
+            total_deposit += amount_eth * ETHER2WEI + amount_wei
+            tb.deposit(address, ether=amount_eth, wei=amount_wei)
+
+        total_withdraw = 0
+        for i in range(N):
+            address = "X" + str(i)
+            r = tb.withdraw(address)
+            total_withdraw += r
+
+        self.assertEqual(total_withdraw, total_deposit)
+
 
     def test_sequence(self):
         self.test_five_users()
