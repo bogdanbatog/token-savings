@@ -93,7 +93,7 @@ class FeeRedistributionAtWithdrawlConstantTime:
         self.reward_ppt_initial[address] = self.reward_ppt_total
 
         # update total
-        self.principal_total += amount
+        self.principal_total += amount / PPT * PPT
 
     def withdraw(self, address):
         if address not in self.principal:
@@ -108,21 +108,21 @@ class FeeRedistributionAtWithdrawlConstantTime:
         # clear user account
         self.principal[address] = 0
         self.reward_ppt_initial[address] = 0
-        is_last_withdrawal = principal == self.principal_total
-        self.principal_total -= principal
+        self.principal_total -= principal / PPT * PPT
 
         # update total reward and remainder
-        if not is_last_withdrawal:
+        if self.principal_total > 0:
             amount = fee + self.reward_remainder  # wei
             base = self.principal_total / PPT # T wei
-
-            if base == 0:
-                self.reward_remainder = amount
-            else:
-                ratio = amount / base  # 1 / T
-                self.reward_ppt_total += ratio
-                self.reward_remainder = amount % base  # wei
+            # Note: principal_total > 0 results there's at least one deposit
+            # amount in the total; but any deposit >= PPT; hence base > 0
+            # So the below division is safe.
+            ratio = amount / base  # 1 / T
+            self.reward_ppt_total += ratio
+            self.reward_remainder = amount % base  # wei
         else:
+            assert self.principal_total == 0
+
             # special case for last withdrawal: no fee
             fee = 0
             reward += self.reward_remainder
