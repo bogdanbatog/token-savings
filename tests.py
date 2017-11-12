@@ -150,6 +150,30 @@ class TestFeeRedistribution(unittest.TestCase):
 
         self.assertEqual(total_withdraw, total_deposit)
 
+    def test_random_reward(self):
+        tb = TestKlass()
+        N = 1000
+        tb.deposit("alpha", ether=100)
+        alpha_reward = 0
+
+        total_deposit = 0
+        total_withdrawal =0
+        for i in range(N):
+            address = "X" + str(i)
+            amount_eth = random.randint(0, 10**6)
+            amount_wei = random.randint(1, ETHER2WEI - 1)
+            amount = (amount_eth * ETHER2WEI + amount_wei)
+            tb.deposit(address, ether=amount_eth, wei=amount_wei)
+            r = tb.withdraw(address)
+            total_deposit += amount
+            total_withdrawal += r
+
+            alpha_reward +=  amount / PPT * FEE_RATIO_PPT
+
+        r = tb.withdraw("alpha")
+
+        self.assertEqual(r, 100 * ETHER2WEI + alpha_reward)
+        self.assertEqual(total_deposit - total_withdrawal, alpha_reward)
 
     def test_sequence(self):
         self.test_five_users()

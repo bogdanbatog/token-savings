@@ -101,13 +101,13 @@ class FeeRedistributionAtWithdrawlConstantTime:
 
         # init
         principal = self.principal[address]
-        fee = principal * FEE_RATIO_PPT / PPT # all integer
+        fee = principal / PPT * FEE_RATIO_PPT # all integer
         reward_ppt = self.reward_ppt_total - self.reward_ppt_initial[address]
         reward = principal / PPT * reward_ppt
 
         # clear user account
-        self.principal[address] = 0
-        self.reward_ppt_initial[address] = 0
+        self.principal.pop(address)
+        self.reward_ppt_initial.pop(address)
         self.principal_total -= principal / PPT * PPT
 
         # update total reward and remainder
