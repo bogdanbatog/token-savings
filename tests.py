@@ -15,13 +15,21 @@ class TestFeeRedistribution(unittest.TestCase):
     def test_one_user(self):
         tb = TestKlass()
         tb.deposit("A1", ether=100)
+        tb.increment_current_block()
         ret = tb.withdraw("A1")
         self.assertEqual(ret, 100 * ETHER2WEI)
+
+    def test_one_user_same_block(self):
+        tb = TestKlass()
+        tb.deposit("A1", ether=100)
+        ret = tb.withdraw("A1")
+        self.assertIsNone(ret)
 
     def test_two_users(self):
         tb = TestKlass()
         tb.deposit("A2", ether=100)
         tb.deposit("B2", ether=100)
+        tb.increment_current_block()
         ret_a = tb.withdraw("A2")
         ret_b = tb.withdraw("B2")
         self.assertEqual(ret_a + ret_b, (100 + 100) * ETHER2WEI)
@@ -31,6 +39,7 @@ class TestFeeRedistribution(unittest.TestCase):
         tb = TestKlass()
         tb.deposit("A3", ether=100)
         tb.deposit("B3", ether=100000)
+        tb.increment_current_block()
         ret_a = tb.withdraw("A3")
         ret_b = tb.withdraw("B3")
         self.assertEqual(ret_a + ret_b, (100 + 100000) * ETHER2WEI)
@@ -40,6 +49,7 @@ class TestFeeRedistribution(unittest.TestCase):
         tb = TestKlass()
         tb.deposit("A4", wei=3 * PPT)
         tb.deposit("B4", ether=1000000)
+        tb.increment_current_block()
         ret_b = tb.withdraw("B4")
         ret_a = tb.withdraw("A4")
         self.assertEqual(ret_b,
@@ -51,6 +61,7 @@ class TestFeeRedistribution(unittest.TestCase):
         tb.deposit("A5", wei=3 * PPT)
         tb.deposit("B5", ether=1000000)
         tb.deposit("C5", ether=1)
+        tb.increment_current_block()
         ret_b = tb.withdraw("B5")
         ret_c = tb.withdraw("C5")
         ret_a = tb.withdraw("A5")
@@ -70,6 +81,7 @@ class TestFeeRedistribution(unittest.TestCase):
         tb.deposit("A6", wei=3 * PPT)
         tb.deposit("B6", ether=1000000)
         tb.deposit("C6", ether=40)
+        tb.increment_current_block()
         ret_c = tb.withdraw("C6")
         ret_b = tb.withdraw("B6")
         ret_a = tb.withdraw("A6")
@@ -90,6 +102,7 @@ class TestFeeRedistribution(unittest.TestCase):
         tb.deposit("C7", ether=700)
         tb.deposit("D7", ether=70)
         tb.deposit("E7", ether=7)
+        tb.increment_current_block()
         ret_a = tb.withdraw("A7")
         ret_b = tb.withdraw("B7")
         ret_c = tb.withdraw("C7")
@@ -122,6 +135,8 @@ class TestFeeRedistribution(unittest.TestCase):
             address = "X" + str(i)
             tb.deposit(address, ether=S)
 
+        tb.increment_current_block()
+
         total_withdraw = 0
         for i in range(N):
             address = "X" + str(i)
@@ -141,6 +156,8 @@ class TestFeeRedistribution(unittest.TestCase):
 
             total_deposit += amount_eth * ETHER2WEI + amount_wei
             tb.deposit(address, ether=amount_eth, wei=amount_wei)
+
+        tb.increment_current_block()
 
         total_withdraw = 0
         for i in range(N):
@@ -164,6 +181,7 @@ class TestFeeRedistribution(unittest.TestCase):
             amount_wei = random.randint(1, ETHER2WEI - 1)
             amount = (amount_eth * ETHER2WEI + amount_wei)
             tb.deposit(address, ether=amount_eth, wei=amount_wei)
+            tb.increment_current_block()
             r = tb.withdraw(address)
             total_deposit += amount
             total_withdrawal += r

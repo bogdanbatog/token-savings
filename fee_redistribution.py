@@ -76,7 +76,33 @@ class FeeRedistributionAtWithdrawlConstantTime:
         self.reward_ppt_total = 0
         self.reward_remainder = 0
 
+        self.current_block = 0
+        self.last_seen_block = 0
+
+        self.pending_deposits = {}  # dict from addresses to amounts in wei
+
+    def increment_current_block(self):
+        self.current_block += 1
+
+    def _process_pending_deposits(self):
+        for (address, amount) in self.pending_deposits.items():
+            # update user balance
+            self.principal[address] = amount
+            self.reward_ppt_initial[address] = self.reward_ppt_total
+
+            # update total
+            self.principal_total += amount / PPT * PPT
+
+        self.pending_deposits = {}
+
+    def _check_new_block_and_update(self):
+        if self.current_block != self.last_seen_block:
+            self._process_pending_deposits()
+            self.last_seen_block = self.current_block
+
     def deposit(self, address, ether=0, wei=0):
+        self._check_new_block_and_update()
+
         amount = int(ether) * ETHER2WEI + int(wei)
         if amount <= 0:
             return None
@@ -85,17 +111,14 @@ class FeeRedistributionAtWithdrawlConstantTime:
             raise Exception(
                 "Deposits smaller than {} wei not accepted".format(PPT))
 
-        if address in self.principal:
+        if address in self.principal or address in self.pending_deposits:
             raise Exception("Not Implemented: multiple deposits per address.")
 
-        # update user balance
-        self.principal[address] = amount
-        self.reward_ppt_initial[address] = self.reward_ppt_total
-
-        # update total
-        self.principal_total += amount / PPT * PPT
+        self.pending_deposits[address] = amount
 
     def withdraw(self, address):
+        self._check_new_block_and_update()
+
         if address not in self.principal:
             return None
 
