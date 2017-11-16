@@ -44,6 +44,8 @@ contract SaveBling {
         return true;
     }
 
+    /// Withdraw funds associated with the sender address,
+    /// deducting fee and including reward.
     function withdraw() payable returns (uint) {
         if (principal[msg.sender] == 0)
             return 0;
