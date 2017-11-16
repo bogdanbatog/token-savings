@@ -82,8 +82,6 @@ class FeeRedistributionAtWithdrawlConstantTime:
 
     def deposit(self, address, ether=0, wei=0):
         amount = int(ether) * ETHER2WEI + int(wei)
-        if amount <= 0:
-            return None
 
         if amount < PPT:
             raise Exception(
@@ -103,15 +101,27 @@ class FeeRedistributionAtWithdrawlConstantTime:
             actually exceed the principal, in some situations.
             '''
             reward = self._compute_current_reward_for(address)
-            self.principal[address] += amount + reward
+
+            old_principal = self.principal[address]
+            new_principal = old_principal + amount + reward
+
+            self.principal[address] = new_principal
+
+            delta_total = (
+                new_principal / PPT * PPT -
+                old_principal / PPT * PPT
+            )
+
         else:
             self.principal[address] = amount
+
+            delta_total = amount / PPT * PPT
 
         # mark starting term in reward series
         self.reward_ppt_initial[address] = self.reward_ppt_total
 
         # update total
-        self.principal_total += amount / PPT * PPT
+        self.principal_total += delta_total
 
     def withdraw(self, address):
         if address not in self.principal:
