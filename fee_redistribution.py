@@ -76,6 +76,10 @@ class FeeRedistributionAtWithdrawlConstantTime:
         self.reward_ppt_total = 0
         self.reward_remainder = 0
 
+    def _compute_current_reward_for(self, address):
+        reward_ppt = self.reward_ppt_total - self.reward_ppt_initial[address]
+        return self.principal[address] / PPT * reward_ppt
+
     def deposit(self, address, ether=0, wei=0):
         amount = int(ether) * ETHER2WEI + int(wei)
         if amount <= 0:
@@ -86,10 +90,24 @@ class FeeRedistributionAtWithdrawlConstantTime:
                 "Deposits smaller than {} wei not accepted".format(PPT))
 
         if address in self.principal:
-            raise Exception("Not Implemented: multiple deposits per address.")
+            '''
+            Adding to an existing deposit: add existing principal
+            and reward gained so far to the newly deposited amount.
 
-        # update user balance
-        self.principal[address] = amount
+            This will become the new deposit. After this step the previous
+            reward now BECOMES PART OF THE NEW PRINCIPAL, effectively
+            generating a compound interest.
+
+            In the absence of such additional deposits, rewards are only
+            computed on the principal, even if the accumulated reward may
+            actually exceed the principal, in some situations.
+            '''
+            reward = self._compute_current_reward_for(address)
+            self.principal[address] += amount + reward
+        else:
+            self.principal[address] = amount
+
+        # mark starting term in reward series
         self.reward_ppt_initial[address] = self.reward_ppt_total
 
         # update total
@@ -102,8 +120,7 @@ class FeeRedistributionAtWithdrawlConstantTime:
         # init
         principal = self.principal[address]
         fee = principal / PPT * FEE_RATIO_PPT # all integer
-        reward_ppt = self.reward_ppt_total - self.reward_ppt_initial[address]
-        reward = principal / PPT * reward_ppt
+        reward = self._compute_current_reward_for(address)
 
         # clear user account
         self.principal.pop(address)
