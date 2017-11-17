@@ -16,6 +16,7 @@ contract SaveBling {
     uint256 reward_ppb_total;
     uint256 reward_remainder;
 
+
     /// Initialize the contract.
     function SaveBling() public {
         chairperson = msg.sender;
@@ -24,8 +25,9 @@ contract SaveBling {
         reward_remainder = 0;
     }
 
+
     /// Deposit funds into contract.
-    function deposit() payable returns (bool) {
+    function deposit() private returns (bool) {
         if (msg.value < PPB)
             // raise Exception("Deposits smaller than 1 Gwei not accepted")
             return false;
@@ -44,9 +46,10 @@ contract SaveBling {
         return true;
     }
 
+
     /// Withdraw funds associated with the sender address,
     /// deducting fee and including reward.
-    function withdraw() payable returns (uint) {
+    function withdraw() private returns (uint) {
         if (principal[msg.sender] == 0)
             return 0;
 
@@ -81,6 +84,18 @@ contract SaveBling {
             reward_remainder = 0;
         }
 
-        return original_principal - fee + reward;
+        var send_amount = original_principal - fee + reward;
+        msg.sender.transfer(send_amount);
+    }
+
+
+    /// Dispatch to deposit or withdraw functions.
+    function () public payable {
+        if (msg.value > 0) {
+            deposit();
+        }
+        if (msg.value == 0) {
+            withdraw();
+        }
     }
 }
