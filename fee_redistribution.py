@@ -141,8 +141,8 @@ class FeeRedistributionAtWithdrawlConstantTime:
             raise Exception(
                 "Deposits smaller than {} wei not accepted".format(PPT))
 
-        # TODO: if already pending
-        self.pending_deposits[address] = amount
+        already_pending = self.pending_deposits.get(address, 0)
+        self.pending_deposits[address] = already_pending + amount
 
     def withdraw(self, address):
         self._check_new_block_and_update()
