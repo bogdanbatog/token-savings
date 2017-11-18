@@ -204,6 +204,7 @@ class TestFeeRedistribution(unittest.TestCase):
         tb.deposit("B", ether=40)
 
         tb.deposit("C", ether=800)
+        tb.increment_current_block()
         ret_c = tb.withdraw("C")  # both A and B get 10 reward
 
         tb.deposit("B", ether=70)  # B now has a principal of 40+10+70
@@ -211,6 +212,7 @@ class TestFeeRedistribution(unittest.TestCase):
                                    # and A's reward is 10
 
         tb.deposit("D", ether=160)
+        tb.increment_current_block()
         ret_d = tb.withdraw("D")  # A gets 1 and B gets 3 reward
 
         ret_a = tb.withdraw("A")  # B gets 1 reward
