@@ -26,7 +26,7 @@ contract SaveBling {
     }
 
 
-    function computeCurrentReward() private returns (uint256) {
+    function computeCurrentReward() private constant returns (uint256) {
         var reward_ppb = reward_ppb_total - reward_ppb_initial[msg.sender];
         return principal[msg.sender] / PPB * reward_ppb;
     }
@@ -69,9 +69,10 @@ contract SaveBling {
 
 
     /// Withdraw funds associated with the sender address,
-    /// deducting fee and including reward.
+    /// deducting fee and adding reward.
     function withdraw() private {
         if (principal[msg.sender] == 0)
+            // nothing to withdraw
             return;
 
         // init
