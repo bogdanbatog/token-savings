@@ -27,14 +27,14 @@ contract SaveBling {
 
 
     /// Deposit funds into contract.
-    function deposit() private returns (bool) {
+    function deposit() private {
         if (msg.value < PPB)
             // raise Exception("Deposits smaller than 1 Gwei not accepted")
-            return false;
+            return;
 
         if (principal[msg.sender] > 0)
             // raise Exception("Not Implemented: multiple deposits per address.")
-            return false;
+            return;
 
         // update user balance
         principal[msg.sender] = msg.value;
@@ -42,16 +42,14 @@ contract SaveBling {
 
         // update total
         principal_total += msg.value / PPB * PPB;
-
-        return true;
     }
 
 
     /// Withdraw funds associated with the sender address,
     /// deducting fee and including reward.
-    function withdraw() private returns (uint) {
+    function withdraw() private {
         if (principal[msg.sender] == 0)
-            return 0;
+            return;
 
         // init
         var original_principal = principal[msg.sender];
