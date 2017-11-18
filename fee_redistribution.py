@@ -90,41 +90,41 @@ class FeeRedistributionAtWithdrawlConstantTime:
 
     def _process_pending_deposits(self):
         for (address, amount) in self.pending_deposits.items():
-		    if address in self.principal:
-		        '''
-		        Adding to an existing deposit: add existing principal
-		        and reward gained so far to the newly deposited amount.
+            if address in self.principal:
+                '''
+                Adding to an existing deposit: add existing principal
+                and reward gained so far to the newly deposited amount.
 
-		        This will become the new deposit. After this step the previous
-		        reward now BECOMES PART OF THE NEW PRINCIPAL, effectively
-		        generating a compound interest.
+                This will become the new deposit. After this step the previous
+                reward now BECOMES PART OF THE NEW PRINCIPAL, effectively
+                generating a compound interest.
 
-		        In the absence of such additional deposits, rewards are only
-		        computed on the principal, even if the accumulated reward may
-		        actually exceed the principal, in some situations.
-		        '''
-		        reward = self._compute_current_reward_for(address)
+                In the absence of such additional deposits, rewards are only
+                computed on the principal, even if the accumulated reward may
+                actually exceed the principal, in some situations.
+                '''
+                reward = self._compute_current_reward_for(address)
 
-		        old_principal = self.principal[address]
-		        new_principal = old_principal + amount + reward
+                old_principal = self.principal[address]
+                new_principal = old_principal + amount + reward
 
-		        self.principal[address] = new_principal
+                self.principal[address] = new_principal
 
-		        delta_total = (
-		            new_principal / PPT * PPT -
-		            old_principal / PPT * PPT
-		        )
+                delta_total = (
+                    new_principal / PPT * PPT -
+                    old_principal / PPT * PPT
+                )
 
-		    else:
-		        self.principal[address] = amount
+            else:
+                self.principal[address] = amount
 
-		        delta_total = amount / PPT * PPT
+                delta_total = amount / PPT * PPT
 
-		    # mark starting term in reward series
-		    self.reward_ppt_initial[address] = self.reward_ppt_total
+            # mark starting term in reward series
+            self.reward_ppt_initial[address] = self.reward_ppt_total
 
-		    # update total
-		    self.principal_total += delta_total
+            # update total
+            self.principal_total += delta_total
 
         self.pending_deposits = {}
 
@@ -142,7 +142,7 @@ class FeeRedistributionAtWithdrawlConstantTime:
             raise Exception(
                 "Deposits smaller than {} wei not accepted".format(PPT))
 
-		# TODO: if already pending
+        # TODO: if already pending
         self.pending_deposits[address] = amount
 
     def withdraw(self, address):
