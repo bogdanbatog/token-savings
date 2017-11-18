@@ -3,9 +3,9 @@ pragma solidity ^0.4.0;
 
 contract SaveBling {
 
-    uint constant PPB = 10**9;
-    uint constant FEE_RATIO_PPB = 25 * PPB / 1000;             // 2.5%
-    uint constant PRINCIPAL_RATIO_PPB = PPB - FEE_RATIO_PPB;
+    uint256 constant PPB = 10**9;
+    uint256 constant FEE_RATIO_PPB = 25 * PPB / 1000;             // 2.5%
+    uint256 constant PRINCIPAL_RATIO_PPB = PPB - FEE_RATIO_PPB;
 
     address chairperson;
 
@@ -26,22 +26,45 @@ contract SaveBling {
     }
 
 
+    function computeCurrentReward() private returns (uint256) {
+        var reward_ppb = reward_ppb_total - reward_ppb_initial[msg.sender];
+        return principal[msg.sender] / PPB * reward_ppb;
+    }
+
+
     /// Deposit funds into contract.
     function deposit() private {
         if (msg.value < PPB)
             // raise Exception("Deposits smaller than 1 Gwei not accepted")
             return;
 
-        if (principal[msg.sender] > 0)
-            // raise Exception("Not Implemented: multiple deposits per address.")
-            return;
+        uint256 delta_total;
 
-        // update user balance
-        principal[msg.sender] = msg.value;
+        if (principal[msg.sender] > 0) {
+
+            var reward = computeCurrentReward();
+
+            var old_principal = principal[msg.sender];
+            var new_principal = old_principal + msg.value + reward;
+
+            principal[msg.sender] = new_principal;
+
+            delta_total = (
+                new_principal / PPB * PPB -
+                old_principal / PPB * PPB
+            );
+
+        } else {
+            principal[msg.sender] = msg.value;
+
+            delta_total = msg.value / PPB * PPB;
+        }
+
+        // mark starting term in reward series
         reward_ppb_initial[msg.sender] = reward_ppb_total;
 
         // update total
-        principal_total += msg.value / PPB * PPB;
+        principal_total += delta_total;
     }
 
 
@@ -54,8 +77,7 @@ contract SaveBling {
         // init
         var original_principal = principal[msg.sender];
         var fee = original_principal / PPB * FEE_RATIO_PPB;  // all integer
-        var reward_ppb = reward_ppb_total - reward_ppb_initial[msg.sender];
-        var reward = original_principal / PPB * reward_ppb;
+        var reward = computeCurrentReward();
 
         // clear user account
         principal[msg.sender] = 0;
