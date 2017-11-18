@@ -198,6 +198,29 @@ class TestFeeRedistribution(unittest.TestCase):
         self.test_thousand_users()
         self.test_three_users_magnitude()
 
+    def test_multiple_deposits_per_address(self):
+        tb = TestKlass()
+        tb.deposit("A", ether=40)
+        tb.deposit("B", ether=40)
+
+        tb.deposit("C", ether=800)
+        ret_c = tb.withdraw("C")  # both A and B get 10 reward
+
+        tb.deposit("B", ether=70)  # B now has a principal of 40+10+70
+                                   # while A's principal is still 40
+                                   # and A's reward is 10
+
+        tb.deposit("D", ether=160)
+        ret_d = tb.withdraw("D")  # A gets 1 and B gets 3 reward
+
+        ret_a = tb.withdraw("A")  # B gets 1 reward
+        ret_b = tb.withdraw("B")
+
+        self.assertEqual(
+            ret_a + ret_b + ret_c + ret_d, (880 + 70 + 160) * ETHER2WEI
+        )
+        self.assertEqual(ret_b, (40 + 10 + 70 + 3 + 1) * ETHER2WEI)
+
 
 if __name__ == '__main__':
     unittest.main()
