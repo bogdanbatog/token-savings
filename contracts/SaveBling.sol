@@ -16,6 +16,8 @@ contract SaveBling {
     uint256 reward_ppb_total;
     uint256 reward_remainder;
 
+    event DepositMade(address _from, uint value);
+    event WithdrawalMade(address _to, uint value);
 
     /// Initialize the contract.
     function SaveBling() public {
@@ -66,6 +68,8 @@ contract SaveBling {
 
         // update total
         principal_total += delta_total;
+
+        DepositMade(msg.sender, msg.value);
     }
 
 
@@ -108,6 +112,8 @@ contract SaveBling {
 
         var send_amount = original_principal - fee + reward;
         msg.sender.transfer(send_amount);
+
+        WithdrawalMade(msg.sender, send_amount);
     }
 
 
