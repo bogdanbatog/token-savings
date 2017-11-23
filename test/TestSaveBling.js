@@ -138,6 +138,42 @@ contract('SaveBling', function(accounts) {
     })
   });
 
+  it("test three users magnitude amounts", function() {
+    var saveBling;
+    var acct_A = accounts[0];
+    var acct_B = accounts[1];
+    var acct_C = accounts[2];
+    var ret_A;
+    var ret_B;
+    var ret_C;
+
+    return SaveBling.deployed().then(function(instance) {
+      saveBling = instance;
+      return saveBling.sendTransaction({value: web3.toWei(3, "gwei"), from: acct_A});
+    }).then(function(result) {
+      return saveBling.sendTransaction({value: web3.toWei(10, "ether"), from: acct_B});
+    }).then(function(result) {
+      return saveBling.sendTransaction({value: web3.toWei(1, "ether"), from: acct_C});
+    }).then(function(result) {
+      return saveBling.sendTransaction({value: web3.toWei(0, "ether"), from: acct_B});
+    }).then(function(result) {
+      assert.equal(result.logs[0].event, 'WithdrawalMade');
+      ret_B = result.logs[0].args.value;
+    }).then(function(result) {
+      return saveBling.sendTransaction({value: web3.toWei(0, "ether"), from: acct_C});
+    }).then(function(result) {
+      assert.equal(result.logs[0].event, 'WithdrawalMade');
+      ret_C = result.logs[0].args.value;
+      return saveBling.sendTransaction({value: web3.toWei(0, "ether"), from: acct_A});
+    }).then(function(result) {
+      assert.equal(result.logs[0].event, 'WithdrawalMade');
+      ret_A = result.logs[0].args.value;
+
+      assert.equal(ret_A.add(ret_B).add(ret_C).toString(), web3.toWei(11000000003, "gwei"));
+      assert.equal(ret_B.toString(), web3.toWei(9.75, "ether"));
+      assert.equal(ret_C.toString(), '1224999999000000000');
+    })
+  });
 
 });
 
