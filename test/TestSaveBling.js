@@ -175,5 +175,65 @@ contract('SaveBling', function(accounts) {
     })
   });
 
+  it("test five users", function() {
+    var saveBling;
+    var acct_A = accounts[0];
+    var acct_B = accounts[1];
+    var acct_C = accounts[2];
+    var acct_D = accounts[3];
+    var acct_E = accounts[4];
+    var ret_A;
+    var ret_B;
+    var ret_C;
+    var ret_D;
+    var ret_E;
+
+    return SaveBling.deployed().then(function(instance) {
+      saveBling = instance;
+      return saveBling.sendTransaction({value: web3.toWei(70000, "gwei"), from: acct_A});
+    }).then(function(result) {
+      return saveBling.sendTransaction({value: web3.toWei(7000, "gwei"), from: acct_B});
+    }).then(function(result) {
+      return saveBling.sendTransaction({value: web3.toWei(700, "gwei"), from: acct_C});
+    }).then(function(result) {
+      return saveBling.sendTransaction({value: web3.toWei(70, "gwei"), from: acct_D});
+    }).then(function(result) {
+      return saveBling.sendTransaction({value: web3.toWei(7, "gwei"), from: acct_E});
+    }).then(function(result) {
+      return saveBling.sendTransaction({value: web3.toWei(0, "ether"), from: acct_A});
+    }).then(function(result) {
+      assert.equal(result.logs[0].event, 'WithdrawalMade');
+      ret_A = result.logs[0].args.value;
+    }).then(function(result) {
+      return saveBling.sendTransaction({value: web3.toWei(0, "ether"), from: acct_B});
+    }).then(function(result) {
+      assert.equal(result.logs[0].event, 'WithdrawalMade');
+      ret_B = result.logs[0].args.value;
+    }).then(function(result) {
+      return saveBling.sendTransaction({value: web3.toWei(0, "ether"), from: acct_C});
+    }).then(function(result) {
+      assert.equal(result.logs[0].event, 'WithdrawalMade');
+      ret_C = result.logs[0].args.value;
+    }).then(function(result) {
+      return saveBling.sendTransaction({value: web3.toWei(0, "ether"), from: acct_D});
+    }).then(function(result) {
+      assert.equal(result.logs[0].event, 'WithdrawalMade');
+      ret_D = result.logs[0].args.value;
+    }).then(function(result) {
+      return saveBling.sendTransaction({value: web3.toWei(0, "ether"), from: acct_E});
+    }).then(function(result) {
+      assert.equal(result.logs[0].event, 'WithdrawalMade');
+      ret_E = result.logs[0].args.value;
+
+      assert.equal(
+        ret_A.add(ret_B).add(ret_C).add(ret_D).add(ret_E).toString(),
+        web3.toWei(77777, "gwei")
+      );
+      assert.equal(ret_B.toString(), '8400157514000');
+      assert.equal(ret_C.toString(), '997673410300');
+    })
+  });
+
+
 });
 
