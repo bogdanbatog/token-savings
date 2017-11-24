@@ -37,37 +37,23 @@ contract SaveBling {
     /// Deposit funds into contract.
     function deposit() private {
         if (msg.value < PPB)
-            // raise Exception("Deposits smaller than 1 Gwei not accepted")
+            // Deposits smaller than 1 Gwei not accepted
             revert();
 
-        uint256 delta_total;
+        var reward = computeCurrentReward();
 
-        // TODO: no need for else
-        if (principal[msg.sender] > 0) {
+        var old_principal = principal[msg.sender];
+        var new_principal = old_principal + msg.value + reward;
 
-            var reward = computeCurrentReward();
+        principal[msg.sender] = new_principal;
 
-            var old_principal = principal[msg.sender];
-            var new_principal = old_principal + msg.value + reward;
-
-            principal[msg.sender] = new_principal;
-
-            delta_total = (
-                new_principal / PPB * PPB -
-                old_principal / PPB * PPB
-            );
-
-        } else {
-            principal[msg.sender] = msg.value;
-
-            delta_total = msg.value / PPB * PPB;
-        }
+        principal_total += (
+            new_principal / PPB * PPB -
+            old_principal / PPB * PPB
+        );
 
         // mark starting term in reward series
         reward_ppb_initial[msg.sender] = reward_ppb_total;
-
-        // update total
-        principal_total += delta_total;
 
         DepositMade(msg.sender, msg.value);
     }
