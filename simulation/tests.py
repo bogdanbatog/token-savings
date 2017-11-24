@@ -49,21 +49,21 @@ class TestFeeRedistribution(unittest.TestCase):
     def test_three_users_magnitude(self):
         tb = TestKlass()
         tb.deposit("A5", wei=3 * PPT)
-        tb.deposit("B5", ether=1000000)
+        tb.deposit("B5", ether=10)
         tb.deposit("C5", ether=1)
         ret_b = tb.withdraw("B5")
         ret_c = tb.withdraw("C5")
         ret_a = tb.withdraw("A5")
 
         self.assertEqual(ret_b,
-            1000000 * PRINCIPAL_RATIO_PPT * ETHER2WEI / PPT)
+            10 * PRINCIPAL_RATIO_PPT * ETHER2WEI / PPT)
 
-        fee_b = 1000000 * FEE_RATIO_PPT * ETHER2WEI / PPT
+        fee_b = 10 * FEE_RATIO_PPT * ETHER2WEI / PPT
         self.assertEqual(ret_c,
             (fee_b) / (1 * ETHER2WEI / PPT + 3) * 1 * ETHER2WEI / PPT +
             1 * PRINCIPAL_RATIO_PPT * ETHER2WEI / PPT
         )
-        self.assertEqual(ret_a + ret_b + ret_c, 1000001 * ETHER2WEI + 3 * PPT)
+        self.assertEqual(ret_a + ret_b + ret_c, 11 * ETHER2WEI + 3 * PPT)
 
     def test_three_users_magnitude_bis(self):
         tb = TestKlass()
