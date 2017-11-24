@@ -82,45 +82,36 @@ class FeeRedistributionAtWithdrawlConstantTime:
         self.pending_deposits = {}  # dict from addresses to amounts in wei
 
     def _compute_current_reward_for(self, address):
-        reward_ppt = self.reward_ppt_total - self.reward_ppt_initial[address]
-        return self.principal[address] / PPT * reward_ppt
+        reward_ppt = self.reward_ppt_total - self.reward_ppt_initial.get(address, 0)
+        return self.principal.get(address, 0) / PPT * reward_ppt
 
     def _process_one_deposit(self, address, amount):
-        if address in self.principal:
-            '''
-            Adding to an existing deposit: add existing principal
-            and reward gained so far to the newly deposited amount.
+        '''
+        If adding to an existing deposit: add existing principal
+        and reward gained so far to the newly deposited amount.
 
-            This will become the new deposit. After this step the previous
-            reward now BECOMES PART OF THE NEW PRINCIPAL, effectively
-            generating a compound interest.
+        This will become the new deposit. After this step the previous
+        reward now BECOMES PART OF THE NEW PRINCIPAL, effectively
+        generating a compound interest.
 
-            In the absence of such additional deposits, rewards are only
-            computed on the principal, even if the accumulated reward may
-            actually exceed the principal, in some situations.
-            '''
-            reward = self._compute_current_reward_for(address)
+        In the absence of such additional deposits, rewards are only
+        computed on the principal, even if the accumulated reward may
+        actually exceed the principal, in some situations.
+        '''
+        reward = self._compute_current_reward_for(address)
 
-            old_principal = self.principal[address]
-            new_principal = old_principal + amount + reward
+        old_principal = self.principal.get(address, 0)
+        new_principal = old_principal + amount + reward
 
-            self.principal[address] = new_principal
+        self.principal[address] = new_principal
 
-            delta_total = (
-                new_principal / PPT * PPT -
-                old_principal / PPT * PPT
-            )
-
-        else:
-            self.principal[address] = amount
-
-            delta_total = amount / PPT * PPT
+        self.principal_total += (
+            new_principal / PPT * PPT -
+            old_principal / PPT * PPT
+        )
 
         # mark starting term in reward series
         self.reward_ppt_initial[address] = self.reward_ppt_total
-
-        # update total
-        self.principal_total += delta_total
 
     def _process_pending_deposits(self):
         for (address, amount) in self.pending_deposits.items():
