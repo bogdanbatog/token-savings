@@ -234,52 +234,51 @@ contract('SaveBling', function(accounts) {
     })
   });
 
+   it("multiple users", function() {
+    var saveBling;
+    var new_accounts = [];
+    var NUM_USERS = 100;
+    var totalAmount = new web3.BigNumber('0'); 
 
-  // it("test loop", function() {
-  //   var saveBling;
-  //   var acct_A = accounts[0];
-  //   var new_accounts = [];
-  //   var N = 10;
-  //   var ret_A;
-
-  //   return SaveBling.deployed().then(function(instance) {
-  //     saveBling = instance;
-  //     var batch = web3.createBatch();
-  //     for (i=0; i<N; i++) {
-  //       new_accounts.push(web3.personal.newAccount('aaa'));
-  //       batch.add(
-  //         web3.eth.sendTransaction.request(
-  //           {value: web3.toWei(500, "gwei"), from: acct_A, to: new_accounts[i]}
-  //         )
-  //       );
-  //       batch.add(
-  //         web3.eth.sendTransaction.request(
-  //           {value: web3.toWei(40, "gwei"), from: new_accounts[i], to: saveBling.address}
-  //         )
-  //       );
-  //     }
-  //     return batch.execute();
-  //   }).then(function(result) {
-  //     for (i=0; i<N; i++) {
-  //       console.log(web3.eth.getBalance(new_accounts[i]).toString())
-  //     }
-  //     var batch = web3.createBatch();
-  //     for (i=0; i<N; i++) {
-  //       batch.add(
-  //         web3.eth.sendTransaction.request(
-  //           {value: 0, from: new_accounts[i], to: saveBling.address}
-  //         )
-  //       );
-  //     }
-  //     return batch.execute();
-  //   }).then(function(result) {
-  //     for (i=0; i<N; i++) {
-  //       console.log(web3.eth.getBalance(new_accounts[i]).toString())
-  //     }
-
-  //     assert.equal(result.logs[0].event, 'WithdrawalMade');
-  //   })
-  // });
+    return SaveBling.deployed().then(function(instance) {
+      saveBling = instance;
+      for (i = 0; i < NUM_USERS; i++) {
+        new_accounts.push(web3.personal.newAccount('password'));
+      }
+      var promises = [];
+      for (i = 0; i < NUM_USERS; i++) {
+        var sourceAccount = accounts[i%5];
+        promises.push(web3.eth.sendTransaction(
+          {value: web3.toWei(1, "ether"), from: sourceAccount, to: new_accounts[i]}));
+      }
+      return Promise.all(promises);
+    }).then(function(result) {
+      var promises = [];
+      for (i = 0; i < NUM_USERS; i++) {
+        var depositAmount = web3.toWei(100+Math.floor(Math.random()*400), "gwei");
+        web3.personal.unlockAccount(new_accounts[i], "password", 15000);
+        promises.push(web3.eth.sendTransaction(
+          {value: depositAmount, from: new_accounts[i], to: saveBling.address}));
+        totalAmount = totalAmount.plus(depositAmount);
+      }
+      return Promise.all(promises);
+    }).then(function(result) {
+      var promises = [];
+      for (i = 0; i < NUM_USERS; i++) {
+        promises.push(saveBling.sendTransaction({value: web3.toWei(0, "ether"), from: new_accounts[i]}));
+      }
+      return Promise.all(promises);
+    }).then(function(result) {
+      var sum = new web3.BigNumber('0');
+      for(i = 0; i < result.length; i++) {
+        for(j = 0; j < result[i].logs.length; j++)
+          if (result[i].logs[j].event == "WithdrawalMade") {
+            sum = sum.plus(result[i].logs[j].args.value);
+          }
+      }
+      assert.equal(sum.toNumber(), totalAmount.toNumber(), "Total withdrawn value should be equal to total deposited value.");
+    })
+   });
 
 
   it("test multiple deposits per address", function() {
