@@ -107,8 +107,8 @@ class FeeRedistributionAtWithdrawlConstantTime:
         self.principal[address] = new_principal
 
         self.principal_total += (
-            new_principal / PPT * PPT -
-            old_principal / PPT * PPT
+            new_principal / PPT -
+            old_principal / PPT
         )
 
         # mark starting term in reward series
@@ -127,18 +127,14 @@ class FeeRedistributionAtWithdrawlConstantTime:
         # clear user account
         self.principal.pop(address)
         self.reward_ppt_initial.pop(address)
-        self.principal_total -= principal / PPT * PPT
+        self.principal_total -= principal / PPT
 
         # update total reward and remainder
         if self.principal_total > 0:
             amount = fee + self.reward_remainder  # wei
-            base = self.principal_total / PPT # T wei
-            # Note: principal_total > 0 results there's at least one deposit
-            # amount in the total; but any deposit >= PPT; hence base > 0
-            # So the below division is safe.
-            ratio = amount / base  # 1 / T
+            ratio = amount / self.principal_total  # 1 / T
             self.reward_ppt_total += ratio
-            self.reward_remainder = amount % base  # wei
+            self.reward_remainder = amount % self.principal_total  # wei
         else:
             assert self.principal_total == 0
 
