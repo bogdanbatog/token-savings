@@ -1,7 +1,7 @@
-Token Savings Simulation
-========================
+Token Savings Simulation and Smart Contract
+===========================================
 
-A simple deposit instrument is simulated for cryptocurrency tokens.
+A simple deposit instrument for cryptocurrency tokens.
 
 Deposit and withdraw into a common pool, managed by a smart contract.
 Withdrawals are subject to a constant percentage fee, no matter the
@@ -12,4 +12,4 @@ The Python simulation implements O(1) updates per deposit/withdrawal
 operations, as required by a smart contract environment, where an iteration
 over all deposits would be prohibitively expensive.
 
-All computation is performed on integers only.
+Implemented for Ethereum, in Solidity. Uses `truffle` framework for testing.

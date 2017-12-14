@@ -1,0 +1,26 @@
+{
+  "name": "token-savings",
+  "version": "0.0.0",
+  "description": "savings smart contract",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/bogdanbatog/token-savings.git"
+  },
+  "keywords": [
+    "ethereum",
+    "savings",
+    "smartcontract"
+  ],
+  "author": "Bogdan Batog",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/bogdanbatog/token-savings/issues"
+  },
+  "dependencies": {
+    "bignumber.js": "^4.1.0"
+  }
+}

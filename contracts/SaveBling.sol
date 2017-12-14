@@ -1,27 +1,45 @@
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.11;
 
 
+/// @title SaveBling - Savings account for Ether
+/// @author Bogdan Batog (https://github.com/bogdanbatog)
+/// @dev A 'Savings' account that holds Ethers. Deposits are received by
+///  sending funds directly to the contract address. Withdraws are triggered
+///  by sending 0 Ether from the same address that made the deposit.
 contract SaveBling {
 
     uint256 constant PPB = 10**9;
+
+    /// @notice Withdrawal fee, in parts per billion.
     uint256 constant FEE_RATIO_PPB = 25 * PPB / 1000;             // 2.5%
-    uint256 constant PRINCIPAL_RATIO_PPB = PPB - FEE_RATIO_PPB;
 
-    address chairperson;
-
+    /// @notice Amount deposited per address.
     mapping(address => uint256) principal;
+
+    /// @notice Total deposited principals. In Gwei units.
+    /// @dev The smallest unit eligible for reward is 1 Gwei. Thus, any reminder
+    ///  from the deposited amount, smaller than 1 Gwei, will be ignored when
+    ///  computing the reward.
     uint256 principal_total;
 
-    mapping(address => uint256) reward_ppb_initial;
+    /// @notice Total reward since the beginning of time, in wei per eligible
+    ///  unit (1 Gwei).
     uint256 reward_ppb_total;
+
+    /// @notice Reminder from the last fee redistribution.
     uint256 reward_remainder;
+
+    /// @notice Stores the value of reward_ppb_total at deposit time.
+    /// @dev Reward is computed at withdrawal time as a difference between current
+    ///  total reward and total reward at deposit time, PER eligible unit, 1Gwei.
+    mapping(address => uint256) reward_ppb_initial;
 
     event DepositMade(address _from, uint value);
     event WithdrawalMade(address _to, uint value);
 
+
     /// Initialize the contract.
     function SaveBling() public {
-        chairperson = msg.sender;
         principal_total = 0;
         reward_ppb_total = 0;
         reward_remainder = 0;
@@ -34,7 +52,7 @@ contract SaveBling {
     }
 
 
-    /// Deposit funds into contract.
+    /// @notice Deposit funds into contract.
     function deposit() private {
         if (msg.value < PPB)
             // Deposits smaller than 1 Gwei not accepted
@@ -47,10 +65,7 @@ contract SaveBling {
 
         principal[msg.sender] = new_principal;
 
-        principal_total += (
-            new_principal / PPB * PPB -
-            old_principal / PPB * PPB
-        );
+        principal_total += (new_principal / PPB - old_principal / PPB);
 
         // mark starting term in reward series
         reward_ppb_initial[msg.sender] = reward_ppb_total;
@@ -59,8 +74,17 @@ contract SaveBling {
     }
 
 
-    /// Withdraw funds associated with the sender address,
-    /// deducting fee and adding reward.
+    /// @notice Returns the amount that would be sent by a real withdrawal.
+    function simulateWithdrawal() public constant returns (uint256) {
+        var original_principal = principal[msg.sender];
+        var fee = original_principal / PPB * FEE_RATIO_PPB;  // all integer
+        var reward = computeCurrentReward();
+        return original_principal - fee + reward;
+    }
+
+
+    /// @notice Withdraw funds associated with the sender address,
+    ///  deducting fee and adding reward.
     function withdraw() private {
         if (principal[msg.sender] == 0)
             // nothing to withdraw
@@ -74,19 +98,14 @@ contract SaveBling {
         // clear user account
         principal[msg.sender] = 0;
         reward_ppb_initial[msg.sender] = 0;
-        principal_total -= original_principal / PPB * PPB;
+        principal_total -= original_principal / PPB;
 
         // update total reward and remainder
         if (principal_total > 0) {
-            var amount = fee + reward_remainder;      // wei
-            var base = principal_total / PPB;         // Gwei
-
-            // Note: principal_total > 0 results there's at least one deposit
-            // amount in the total; but any deposit >= PPB; hence base > 0
-            // So the below division is safe.
-            var ratio = amount / base;                // 1/Gwei
+            var amount = fee + reward_remainder;              // wei
+            var ratio = amount / principal_total;             // 1/Gwei
             reward_ppb_total += ratio;
-            reward_remainder = amount % base;         // wei
+            reward_remainder = amount % principal_total;      // wei
         } else {
             assert(principal_total == 0);
 
