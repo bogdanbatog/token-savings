@@ -74,6 +74,15 @@ contract SaveBling {
     }
 
 
+    /// @notice Returns the amount that would be sent by a real withdrawal.
+    function simulateWithdrawal() public constant returns (uint256) {
+        var original_principal = principal[msg.sender];
+        var fee = original_principal / PPB * FEE_RATIO_PPB;  // all integer
+        var reward = computeCurrentReward();
+        return original_principal - fee + reward;
+    }
+
+
     /// @notice Withdraw funds associated with the sender address,
     ///  deducting fee and adding reward.
     function withdraw() private {
