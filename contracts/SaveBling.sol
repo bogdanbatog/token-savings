@@ -16,9 +16,9 @@ contract SaveBling {
     /// @notice Amount deposited per address.
     mapping(address => uint256) principal;
 
-    /// @notice Accumulates principals rounded down to a multiple of 1 Gwei.
+    /// @notice Total deposited principals. In Gwei units.
     /// @dev The smallest unit eligible for reward is 1 Gwei. Thus, any reminder
-    ///  smaller than 1 Gwei, from the deposited amount will be ignored when
+    ///  from the deposited amount, smaller than 1 Gwei, will be ignored when
     ///  computing the reward.
     uint256 principal_total;
 
@@ -31,7 +31,7 @@ contract SaveBling {
 
     /// @notice Stores the value of reward_ppb_total at deposit time.
     /// @dev Reward is computed at withdrawal time as a difference between current
-    ///  total reward and total reward at time of deposit, PER eligible unit, 1Gwei.
+    ///  total reward and total reward at deposit time, PER eligible unit, 1Gwei.
     mapping(address => uint256) reward_ppb_initial;
 
     event DepositMade(address _from, uint value);
@@ -65,10 +65,7 @@ contract SaveBling {
 
         principal[msg.sender] = new_principal;
 
-        principal_total += (
-            new_principal / PPB * PPB -
-            old_principal / PPB * PPB
-        );
+        principal_total += (new_principal / PPB - old_principal / PPB);
 
         // mark starting term in reward series
         reward_ppb_initial[msg.sender] = reward_ppb_total;
@@ -92,19 +89,14 @@ contract SaveBling {
         // clear user account
         principal[msg.sender] = 0;
         reward_ppb_initial[msg.sender] = 0;
-        principal_total -= original_principal / PPB * PPB;
+        principal_total -= original_principal / PPB;
 
         // update total reward and remainder
         if (principal_total > 0) {
-            var amount = fee + reward_remainder;      // wei
-            var base = principal_total / PPB;         // Gwei
-
-            // Note: principal_total > 0 results there's at least one deposit
-            // amount in the total; but any deposit >= PPB; hence base > 0
-            // So the below division is safe.
-            var ratio = amount / base;                // 1/Gwei
+            var amount = fee + reward_remainder;              // wei
+            var ratio = amount / principal_total;             // 1/Gwei
             reward_ppb_total += ratio;
-            reward_remainder = amount % base;         // wei
+            reward_remainder = amount % principal_total;      // wei
         } else {
             assert(principal_total == 0);
 
