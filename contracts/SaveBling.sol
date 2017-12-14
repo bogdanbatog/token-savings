@@ -1,27 +1,45 @@
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.11;
 
 
+/// @title SaveBling - Savings account for Ether
+/// @author Bogdan Batog (https://github.com/bogdanbatog)
+/// @dev A 'Savings' account that holds Ethers. Deposits are received by
+///  sending funds directly to the contract address. Withdraws are triggered
+///  by sending 0 Ether from the same address that made the deposit.
 contract SaveBling {
 
     uint256 constant PPB = 10**9;
+
+    /// @notice Withdrawal fee, in parts per billion.
     uint256 constant FEE_RATIO_PPB = 25 * PPB / 1000;             // 2.5%
-    uint256 constant PRINCIPAL_RATIO_PPB = PPB - FEE_RATIO_PPB;
 
-    address chairperson;
-
+    /// @notice Amount deposited per address.
     mapping(address => uint256) principal;
+
+    /// @notice Accumulates principals rounded down to a multiple of 1 Gwei.
+    /// @dev The smallest unit eligible for reward is 1 Gwei. Thus, any reminder
+    ///  smaller than 1 Gwei, from the deposited amount will be ignored when
+    ///  computing the reward.
     uint256 principal_total;
 
-    mapping(address => uint256) reward_ppb_initial;
+    /// @notice Total reward since the beginning of time, in wei per eligible
+    ///  unit (1 Gwei).
     uint256 reward_ppb_total;
+
+    /// @notice Reminder from the last fee redistribution.
     uint256 reward_remainder;
+
+    /// @notice Stores the value of reward_ppb_total at deposit time.
+    /// @dev Reward is computed at withdrawal time as a difference between current
+    ///  total reward and total reward at time of deposit, PER eligible unit, 1Gwei.
+    mapping(address => uint256) reward_ppb_initial;
 
     event DepositMade(address _from, uint value);
     event WithdrawalMade(address _to, uint value);
 
+
     /// Initialize the contract.
     function SaveBling() public {
-        chairperson = msg.sender;
         principal_total = 0;
         reward_ppb_total = 0;
         reward_remainder = 0;
@@ -34,7 +52,7 @@ contract SaveBling {
     }
 
 
-    /// Deposit funds into contract.
+    /// @notice Deposit funds into contract.
     function deposit() private {
         if (msg.value < PPB)
             // Deposits smaller than 1 Gwei not accepted
@@ -59,8 +77,8 @@ contract SaveBling {
     }
 
 
-    /// Withdraw funds associated with the sender address,
-    /// deducting fee and adding reward.
+    /// @notice Withdraw funds associated with the sender address,
+    ///  deducting fee and adding reward.
     function withdraw() private {
         if (principal[msg.sender] == 0)
             // nothing to withdraw
