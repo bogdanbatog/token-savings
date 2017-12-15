@@ -46,9 +46,9 @@ contract SaveBling {
     }
 
 
-    function computeCurrentReward() private constant returns (uint256) {
-        var reward_ppb = reward_ppb_total - reward_ppb_initial[msg.sender];
-        return principal[msg.sender] / PPB * reward_ppb;
+    function computeCurrentReward(address _address) private constant returns (uint256) {
+        var reward_ppb = reward_ppb_total - reward_ppb_initial[_address];
+        return principal[_address] / PPB * reward_ppb;
     }
 
 
@@ -58,7 +58,7 @@ contract SaveBling {
             // Deposits smaller than 1 Gwei not accepted
             revert();
 
-        var reward = computeCurrentReward();
+        var reward = computeCurrentReward(msg.sender);
 
         var old_principal = principal[msg.sender];
         var new_principal = old_principal + msg.value + reward;
@@ -75,10 +75,10 @@ contract SaveBling {
 
 
     /// @notice Returns the amount that would be sent by a real withdrawal.
-    function simulateWithdrawal() public constant returns (uint256) {
-        var original_principal = principal[msg.sender];
+    function simulateWithdrawal(address _address) public view returns (uint256) {
+        var original_principal = principal[_address];
         var fee = original_principal / PPB * FEE_RATIO_PPB;  // all integer
-        var reward = computeCurrentReward();
+        var reward = computeCurrentReward(_address);
         return original_principal - fee + reward;
     }
 
@@ -93,7 +93,7 @@ contract SaveBling {
         // init
         var original_principal = principal[msg.sender];
         var fee = original_principal / PPB * FEE_RATIO_PPB;  // all integer
-        var reward = computeCurrentReward();
+        var reward = computeCurrentReward(msg.sender);
 
         // clear user account
         principal[msg.sender] = 0;
