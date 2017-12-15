@@ -88,7 +88,7 @@ contract SaveBling {
     function withdraw() private {
         if (principal[msg.sender] == 0)
             // nothing to withdraw
-            return;
+            revert();
 
         // init
         var original_principal = principal[msg.sender];
