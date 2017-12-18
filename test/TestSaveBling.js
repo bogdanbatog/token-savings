@@ -237,7 +237,7 @@ contract('SaveBling', function(accounts) {
    it("multiple users", function() {
     var saveBling;
     var new_accounts = [];
-    var NUM_USERS = 100;
+    var NUM_USERS = 10;
     var totalAmount = new web3.BigNumber('0'); 
 
     return SaveBling.deployed().then(function(instance) {
