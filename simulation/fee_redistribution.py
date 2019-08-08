@@ -76,17 +76,16 @@ class FeeRedistributionAtWithdrawlConstantTime:
         self.reward_ppt_total = 0
         self.reward_remainder = 0
 
+        self.current_block = 0
+        self.last_seen_block = 0
+
+        self.pending_deposits = {}  # dict from addresses to amounts in wei
+
     def _compute_current_reward_for(self, address):
         reward_ppt = self.reward_ppt_total - self.reward_ppt_initial.get(address, 0)
         return self.principal.get(address, 0) / PPT * reward_ppt
 
-    def deposit(self, address, ether=0, wei=0):
-        amount = int(ether) * ETHER2WEI + int(wei)
-
-        if amount < PPT:
-            raise Exception(
-                "Deposits smaller than {} wei not accepted".format(PPT))
-
+    def _process_one_deposit(self, address, amount):
         '''
         If adding to an existing deposit: add existing principal
         and reward gained so far to the newly deposited amount.
@@ -114,8 +113,31 @@ class FeeRedistributionAtWithdrawlConstantTime:
         # mark starting term in reward series
         self.reward_ppt_initial[address] = self.reward_ppt_total
 
+    def _process_pending_deposits(self):
+        for (address, amount) in self.pending_deposits.items():
+            self._process_one_deposit(address, amount)
+        self.pending_deposits = {}
+
+    def _check_new_block_and_update(self):
+        if self.current_block != self.last_seen_block:
+            self._process_pending_deposits()
+            self.last_seen_block = self.current_block
+
+    def deposit(self, address, ether=0, wei=0):
+        self._check_new_block_and_update()
+
+        amount = int(ether) * ETHER2WEI + int(wei)
+
+        if amount < PPT:
+            raise Exception(
+                "Deposits smaller than {} wei not accepted".format(PPT))
+
+        already_pending = self.pending_deposits.get(address, 0)
+        self.pending_deposits[address] = already_pending + amount
 
     def withdraw(self, address):
+        self._check_new_block_and_update()
+
         if address not in self.principal:
             return None
 
@@ -144,3 +166,6 @@ class FeeRedistributionAtWithdrawlConstantTime:
             self.reward_remainder = 0
 
         return principal - fee + reward
+
+    def increment_current_block(self):
+        self.current_block += 1
